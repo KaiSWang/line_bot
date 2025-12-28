@@ -17,9 +17,16 @@
   <div class="message" id="message">正在綁定中...</div>
 
   <script>
-    // ★★★ 填入你的資料 ★★★
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
+    // ★★★ 設定區 ★★★
+    // 你的 GAS 後端網址 (記得填入你部署後的那個 /exec 網址)
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
+    
+    // 你的 LIFF ID
     const MY_LIFF_ID = '2008790654-8VSWQv9A';
+    
+    // ★★★ 關鍵修改：請填入你的官方帳號加好友連結 ★★★
+    // 格式通常是 https://line.me/R/ti/p/@sinosuisse
+    const LINE_OA_URL = 'https://line.me/R/ti/p/@sinosuisse'; 
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -30,6 +37,7 @@
           }
           liff.getProfile().then(profile => {
             const urlParams = new URLSearchParams(window.location.search);
+            // 這裡會抓網址 ?agent= 後面的名字
             const agent = urlParams.get('agent') || 'Default';
             sendToGAS(profile.userId, agent);
           });
@@ -37,14 +45,20 @@
     };
 
     function sendToGAS(userId, agent) {
-      // 使用 no-cors 模式發送資料 (只送不讀，避開 CORS 錯誤)
+      // 顯示正在處理
+      document.getElementById('message').innerText = "綁定顧問 " + agent + " 中...";
+
       const finalUrl = `${GAS_URL}?userId=${userId}&agent=${agent}`;
       
       fetch(finalUrl, { method: 'POST', mode: 'no-cors' })
         .then(() => {
           document.getElementById('loader').style.display = 'none';
-          document.getElementById('message').innerText = "✅ 綁定成功！";
-          setTimeout(() => liff.closeWindow(), 2000);
+          document.getElementById('message').innerText = "✅ 綁定成功！正在跳轉...";
+          
+          // ★★★ 這裡改成跳轉到官方帳號 ★★★
+          setTimeout(() => {
+             window.location.href = LINE_OA_URL;
+          }, 1500);
         })
         .catch(err => {
           document.getElementById('message').innerText = "連線異常，但資料可能已送出";
@@ -53,4 +67,3 @@
   </script>
 </body>
 </html>
-
