@@ -3,39 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>綁定偵錯模式</title>
+  <title>會員綁定</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; word-break: break-all; }
-    .box { background: #f0f0f0; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; }
-    .label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-    .value { color: #007bff; font-family: monospace; font-size: 14px; }
-    .success { color: green; font-weight: bold; font-size: 20px; text-align: center;}
+    body { 
+      font-family: sans-serif; 
+      padding: 20px; 
+      text-align: center; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 80vh;
+    }
+    .status-text { 
+      font-size: 20px; 
+      font-weight: bold; 
+      color: #333; 
+      margin-top: 20px;
+    }
+    .loading {
+      font-size: 50px;
+    }
   </style>
 </head>
 <body>
-  <h3>🕵️‍♂️ 🕵️‍♂️ 參數遺失偵查</h3>
-  
-  <div class="box">
-    <span class="label">1. 目前網址 (Current URL):</span>
-    <div id="debug-url" class="value">讀取中...</div>
-  </div>
 
-  <div class="box">
-    <span class="label">2. 抓到的 Agent:</span>
-    <div id="debug-agent" class="value" style="font-size: 18px; color: red;">等待中...</div>
-  </div>
-
-  <div id="status" class="success"></div>
+  <div id="icon" class="loading">⏳</div>
+  <div id="status" class="status-text">正在進行綁定...</div>
 
   <script>
-    // ★★★ 設定區 ★★★
+    // ★★★ 設定區 (已更新為正確網址) ★★★
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
     const MY_LIFF_ID = '2008790654-8VSWQv9A';
     const LINE_OA_URL = 'https://line.me/R/ti/p/@sinosuisse'; 
-
-    // 把網址印出來，看參數有沒有被吃掉
-    document.getElementById('debug-url').innerText = window.location.href;
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -46,37 +46,39 @@
           }
           liff.getProfile().then(profile => {
             const urlParams = new URLSearchParams(window.location.search);
-            // 嘗試抓取 agent
             let agent = urlParams.get('agent');
             
-            // 顯示抓取結果
-            const displayAgent = agent ? agent : "❌ 沒抓到 (變成 Default)";
-            document.getElementById('debug-agent').innerText = displayAgent;
-
-            // 如果沒抓到，就用 Default
+            // 如果沒抓到 agent，設為 Default
             if (!agent) agent = 'Default';
 
             // 發送給後端
             sendToGAS(profile.userId, agent);
           });
+        })
+        .catch(err => {
+          document.getElementById('status').innerText = "❌ 初始化失敗，請重新整理";
+          document.getElementById('icon').innerText = "⚠️";
         });
     };
 
     function sendToGAS(userId, agent) {
-      document.getElementById('status').innerText = "正在傳送給 Google Sheet...";
-
       // 加入 encodeURIComponent 避免中文亂碼
       const finalUrl = `${GAS_URL}?userId=${userId}&agent=${encodeURIComponent(agent)}`;
       
       fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
         .then(() => {
-          document.getElementById('status').innerText = "✅ 資料已送出！";
+          // 成功後的動作
+          document.getElementById('icon').innerText = "✅";
+          document.getElementById('status').innerText = "綁定成功！正在返回...";
           
-          // ★★★ 暫時不跳轉，讓你截圖或檢查 ★★★
-          // setTimeout(() => { window.location.href = LINE_OA_URL; }, 1500);
+          // ★★★ 正式版：開啟自動跳轉 ★★★
+          setTimeout(() => { 
+            window.location.href = LINE_OA_URL; 
+          }, 1500);
         })
         .catch(err => {
-          document.getElementById('status').innerText = "❌ 連線錯誤";
+          document.getElementById('icon').innerText = "❌";
+          document.getElementById('status').innerText = "連線錯誤，請稍後再試";
         });
     }
   </script>
