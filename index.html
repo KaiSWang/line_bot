@@ -68,7 +68,7 @@
       // 加入 encodeURIComponent 避免中文亂碼
       const finalUrl = `${GAS_URL}?userId=${userId}&agent=${encodeURIComponent(agent)}`;
       
-      fetch(finalUrl, { method: 'POST', mode: 'no-cors' })
+      fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
         .then(() => {
           document.getElementById('status').innerText = "✅ 資料已送出！";
           
