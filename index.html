@@ -6,33 +6,18 @@
   <title>會員綁定</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { 
-      font-family: sans-serif; 
-      padding: 20px; 
-      text-align: center; 
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      height: 80vh;
-    }
-    .status-text { 
-      font-size: 20px; 
-      font-weight: bold; 
-      color: #333; 
-      margin-top: 20px;
-    }
-    .loading {
-      font-size: 50px;
-    }
+    body { font-family: sans-serif; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 80vh; }
+    .status-text { font-size: 20px; font-weight: bold; color: #333; margin-top: 20px; }
+    .loading { font-size: 50px; }
   </style>
 </head>
 <body>
 
   <div id="icon" class="loading">⏳</div>
-  <div id="status" class="status-text">正在進行綁定...</div>
+  <div id="status" class="status-text">正在讀取您的資料...</div>
 
   <script>
-    // ★★★ 設定區 (已更新為正確網址) ★★★
+    // ★★★ 請確認這裡是你最新的 GAS 網址 ★★★
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
     const MY_LIFF_ID = '2008790654-8VSWQv9A';
     const LINE_OA_URL = 'https://line.me/R/ti/p/@sinosuisse'; 
@@ -44,41 +29,45 @@
             liff.login();
             return;
           }
+          // 這裡開始抓取客戶資料
           liff.getProfile().then(profile => {
+            
+            // 1. 抓網址上的 agent 參數
             const urlParams = new URLSearchParams(window.location.search);
             let agent = urlParams.get('agent');
-            
-            // 如果沒抓到 agent，設為 Default
-            if (!agent) agent = 'Default';
+            if (!agent) agent = 'Default'; // 如果網址沒帶參數，就叫 Default
 
-            // 發送給後端
-            sendToGAS(profile.userId, agent);
+            // 2. 抓 LIFF 裡的客戶名字
+            let clientName = profile.displayName; 
+            let userId = profile.userId;
+
+            // 3. 傳送資料
+            sendToGAS(userId, clientName, agent);
           });
         })
         .catch(err => {
-          document.getElementById('status').innerText = "❌ 初始化失敗，請重新整理";
-          document.getElementById('icon').innerText = "⚠️";
+          document.getElementById('status').innerText = "❌ 初始化失敗";
         });
     };
 
-    function sendToGAS(userId, displayName, agent) {
-      // 加入 encodeURIComponent 避免中文亂碼
-      const finalUrl = `${GAS_URL}?userId=${userId}&name=${encodeURIComponent(displayName)}&agent=${encodeURIComponent(agent)}`;
+    function sendToGAS(userId, clientName, agent) {
+      document.getElementById('status').innerText = "正在綁定中...";
+
+      // ★★★ 關鍵：這裡把參數明確分開，name=客戶名, agent=業務碼 ★★★
+      const finalUrl = `${GAS_URL}?userId=${userId}&name=${encodeURIComponent(clientName)}&agent=${encodeURIComponent(agent)}`;
       
       fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
         .then(() => {
-          // 成功後的動作
           document.getElementById('icon').innerText = "✅";
-          document.getElementById('status').innerText = "綁定成功！正在返回...";
+          document.getElementById('status').innerText = `綁定成功！\n歡迎 ${clientName}`; // 顯示一下名字確認有抓到
           
-          // ★★★ 正式版：開啟自動跳轉 ★★★
           setTimeout(() => { 
-            window.location.href = LINE_OA_URL; 
+            liff.openWindow({ url: LINE_OA_URL, external: false });
           }, 1500);
         })
         .catch(err => {
           document.getElementById('icon').innerText = "❌";
-          document.getElementById('status').innerText = "連線錯誤，請稍後再試";
+          document.getElementById('status').innerText = "連線錯誤";
         });
     }
   </script>
