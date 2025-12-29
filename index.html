@@ -3,30 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>專屬顧問綁定</title>
+  <title>綁定偵錯模式</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f8f9fa; }
-    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #06c755; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .message { color: #333; font-size: 18px; font-weight: 500; }
+    body { font-family: sans-serif; padding: 20px; word-break: break-all; }
+    .box { background: #f0f0f0; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; }
+    .label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
+    .value { color: #007bff; font-family: monospace; font-size: 14px; }
+    .success { color: green; font-weight: bold; font-size: 20px; text-align: center;}
   </style>
 </head>
 <body>
-  <div class="loader" id="loader"></div>
-  <div class="message" id="message">正在綁定中...</div>
+  <h3>🕵️‍♂️ 參數遺失偵查</h3>
+  
+  <div class="box">
+    <span class="label">1. 目前網址 (Current URL):</span>
+    <div id="debug-url" class="value">讀取中...</div>
+  </div>
+
+  <div class="box">
+    <span class="label">2. 抓到的 Agent:</span>
+    <div id="debug-agent" class="value" style="font-size: 18px; color: red;">等待中...</div>
+  </div>
+
+  <div id="status" class="success"></div>
 
   <script>
     // ★★★ 設定區 ★★★
-    // 你的 GAS 後端網址 (記得填入你部署後的那個 /exec 網址)
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
-    
-    // 你的 LIFF ID
     const MY_LIFF_ID = '2008790654-8VSWQv9A';
-    
-    // ★★★ 關鍵修改：請填入你的官方帳號加好友連結 ★★★
-    // 格式通常是 https://line.me/R/ti/p/@sinosuisse
-    const LINE_OA_URL = 'https://line.me/R/ti/p/@sinosuisse'; 
+    const LINE_OA_URL = 'https://line.me/R/ti/p/@sino_official'; 
+
+    // 把網址印出來，看參數有沒有被吃掉
+    document.getElementById('debug-url').innerText = window.location.href;
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -37,31 +46,37 @@
           }
           liff.getProfile().then(profile => {
             const urlParams = new URLSearchParams(window.location.search);
-            // 這裡會抓網址 ?agent= 後面的名字
-            const agent = urlParams.get('agent') || 'Default';
+            // 嘗試抓取 agent
+            let agent = urlParams.get('agent');
+            
+            // 顯示抓取結果
+            const displayAgent = agent ? agent : "❌ 沒抓到 (變成 Default)";
+            document.getElementById('debug-agent').innerText = displayAgent;
+
+            // 如果沒抓到，就用 Default
+            if (!agent) agent = 'Default';
+
+            // 發送給後端
             sendToGAS(profile.userId, agent);
           });
         });
     };
 
     function sendToGAS(userId, agent) {
-      // 顯示正在處理
-      document.getElementById('message').innerText = "綁定顧問 " + agent + " 中...";
+      document.getElementById('status').innerText = "正在傳送給 Google Sheet...";
 
-      const finalUrl = `${GAS_URL}?userId=${userId}&agent=${agent}`;
+      // 加入 encodeURIComponent 避免中文亂碼
+      const finalUrl = `${GAS_URL}?userId=${userId}&agent=${encodeURIComponent(agent)}`;
       
       fetch(finalUrl, { method: 'POST', mode: 'no-cors' })
         .then(() => {
-          document.getElementById('loader').style.display = 'none';
-          document.getElementById('message').innerText = "✅ 綁定成功！正在跳轉...";
+          document.getElementById('status').innerText = "✅ 資料已送出！";
           
-          // ★★★ 這裡改成跳轉到官方帳號 ★★★
-          setTimeout(() => {
-             window.location.href = LINE_OA_URL;
-          }, 1500);
+          // ★★★ 暫時不跳轉，讓你截圖或檢查 ★★★
+          // setTimeout(() => { window.location.href = LINE_OA_URL; }, 1500);
         })
         .catch(err => {
-          document.getElementById('message').innerText = "連線異常，但資料可能已送出";
+          document.getElementById('status').innerText = "❌ 連線錯誤";
         });
     }
   </script>
