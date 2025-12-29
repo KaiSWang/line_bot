@@ -61,9 +61,9 @@
         });
     };
 
-    function sendToGAS(userId, agent) {
+    function sendToGAS(userId, displayName, agent) {
       // 加入 encodeURIComponent 避免中文亂碼
-      const finalUrl = `${GAS_URL}?userId=${userId}&agent=${encodeURIComponent(agent)}`;
+      const finalUrl = `${GAS_URL}?userId=${userId}&name=${encodeURIComponent(displayName)}&agent=${encodeURIComponent(agent)}`;
       
       fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
         .then(() => {
