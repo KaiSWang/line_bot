@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>業務專用後台</title>
+    <style>
+        /* 簡單的 CSS，之後再優化 */
+        body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .chat-box { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #fff; }
+        .msg { padding: 8px 12px; margin: 5px 0; border-radius: 15px; max-width: 80%; width: fit-content; }
+        .incoming { background: #f1f0f0; float: left; clear: both; } /* 客戶 */
+        .outgoing { background: #dcf8c6; float: right; clear: both; } /* 業務 */
+        .input-area { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; background: #00B900; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💬 1對1 聊天室</h2>
+    
+    <div style="margin-bottom: 15px;">
+        <label>我是業務:</label>
+        <input type="text" id="myAgentId" value="agent01" style="width: 100px;">
+    </div>
+
+    <div class="chat-box" id="chatWindow">
+        <div style="text-align: center; color: #999;">載入中...</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="msgInput" placeholder="輸入回覆...">
+        <button onclick="sendMsg()">傳送</button>
+    </div>
+    
+    <button onclick="loadHistory()" style="margin-top: 10px; background: #666;">刷新訊息</button>
+</div>
+
+<script>
+    // 🔥 重要：請填入您的 GAS 部署網址 (結尾是 /exec)
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec";
+
+    // 1. 撈取歷史紀錄
+    function loadHistory() {
+        const agentId = document.getElementById('myAgentId').value;
+
+        fetch(GAS_URL, {
+            method: "POST", // GAS doPost 只吃 POST
+            body: JSON.stringify({ 
+                action: 'get_chat_history', // 告訴後端我要做什麼
+                agentId: agentId 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                renderChat(data.data);
+            } else {
+                alert('錯誤: ' + data.msg);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    // 2. 渲染畫面
+    function renderChat(logs) {
+        const box = document.getElementById('chatWindow');
+        box.innerHTML = ''; // 清空
+        logs.forEach(log => {
+            const div = document.createElement('div');
+            // 判斷是誰傳的 (假設 'Agent->User' 是我發的)
+            const isMe = log.direction === 'Agent->User';
+            div.className = 'msg ' + (isMe ? 'outgoing' : 'incoming');
+            div.innerText = (isMe ? '' : '客: ') + log.msg;
+            box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight; // 捲到底部
+    }
+
+    // 3. 發送訊息
+    function sendMsg() {
+        const msg = document.getElementById('msgInput').value;
+        const agentId = document.getElementById('myAgentId').value;
+        if(!msg) return;
+
+        // UI 先顯示 (優化體驗)
+        const box = document.getElementById('chatWindow');
+        const div = document.createElement('div');
+        div.className = 'msg outgoing';
+        div.innerText = msg;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+        document.getElementById('msgInput').value = '';
+
+        // 呼叫後端
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: 'send_message',
+                agentId: agentId,
+                userId: 'U123456...', // 暫時寫死，之後要從選單選客戶
+                message: msg
+            })
+        });
+    }
+
+    // 一進來先撈一次
+    // loadHistory(); 
+</script>
+
+</body>
+</html>
