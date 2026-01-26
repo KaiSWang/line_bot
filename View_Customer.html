@@ -51,7 +51,7 @@
     };
 
     function sendToGAS(userId, clientName, agent) {
-      document.getElementById('status').innerText = "正在綁定中...";
+      document.getElementById('status').innerText = "正在接洽中...";
 
       // ★★★ 關鍵：這裡把參數明確分開，name=客戶名, agent=業務碼 ★★★
       const finalUrl = `${GAS_URL}?userId=${userId}&name=${encodeURIComponent(clientName)}&agent=${encodeURIComponent(agent)}`;
@@ -59,7 +59,7 @@
       fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
         .then(() => {
           document.getElementById('icon').innerText = "✅";
-          document.getElementById('status').innerText = `綁定成功！\n歡迎 ${clientName}`; // 顯示一下名字確認有抓到
+          document.getElementById('status').innerText = `成功！\n歡迎 ${clientName}`; // 顯示一下名字確認有抓到
           
           setTimeout(() => { 
             liff.openWindow({ url: LINE_OA_URL, external: false });
