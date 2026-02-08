@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaTrader APP 下載</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      text-align: center;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    h2 { color: #333; margin-bottom: 10px; }
+    .hint { color: #888; font-size: 14px; margin-bottom: 30px; }
+    .download-btn {
+      display: block;
+      padding: 16px 24px;
+      margin: 12px 0;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .android { background: #34A853; }
+    .ios { background: #007AFF; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AlphaTrader APP 下載</h2>
+    <p class="hint" id="hint">正在偵測您的裝置...</p>
+    <div id="links" style="display:none;">
+      <a class="download-btn android" href="https://play.google.com/store/apps/details?id=uni.UNIE92E8E7&hl=zh_TW&pli=1">Android 下載 (Google Play)</a>
+      <a class="download-btn ios" href="https://apps.apple.com/us/app/alphatrader/id6749107606">iOS 下載 (App Store)</a>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var ua = navigator.userAgent || '';
+      var androidUrl = 'https://play.google.com/store/apps/details?id=uni.UNIE92E8E7&hl=zh_TW&pli=1';
+      var iosUrl = 'https://apps.apple.com/us/app/alphatrader/id6749107606';
+
+      if (/android/i.test(ua)) {
+        window.location.href = androidUrl;
+      } else if (/iPad|iPhone|iPod/.test(ua)) {
+        window.location.href = iosUrl;
+      } else {
+        // Desktop or unknown - show both links
+        document.getElementById('hint').innerText = '請選擇您的裝置系統：';
+        document.getElementById('links').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>
