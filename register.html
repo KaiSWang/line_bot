@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財富AI - 用戶註冊</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f8f9fa; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        input[readonly] { background-color: #e9ecef; color: #666; }
+        button { width: 100%; padding: 12px; background-color: #00B900; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        button:disabled { background-color: #ccc; }
+        .hidden { display: none; }
+        .error { color: red; font-size: 14px; margin-top: 5px; }
+        .success { color: green; font-size: 14px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>財富AI 註冊帳號</h2>
+
+    <!-- 步驟 1: 註冊資訊 -->
+    <div id="step1-form">
+        <div class="form-group">
+            <label>電子信箱 (Email)*</label>
+            <input type="email" id="email" placeholder="請輸入信箱" required>
+        </div>
+        <div class="form-group">
+            <label>用戶名 (Username)*</label>
+            <input type="text" id="username" placeholder="請輸入用戶名" required>
+        </div>
+        <div class="form-group">
+            <label>密碼 (Password)*</label>
+            <input type="password" id="password" placeholder="請輸入密碼" required>
+        </div>
+        <div class="form-group">
+            <label>確認密碼 (Confirm Password)*</label>
+            <input type="password" id="repassword" placeholder="再次輸入密碼" required>
+        </div>
+        <div class="form-group">
+            <label>推薦人 (Referrer)*</label>
+            <input type="text" id="referrer" placeholder="推薦人用戶名" required>
+        </div>
+        <div class="form-group">
+            <label>真實姓名 (Full Name)</label>
+            <input type="text" id="full_name" placeholder="選填">
+        </div>
+        <div class="form-group">
+            <label>手機號碼 (Phone)</label>
+            <input type="text" id="phone" placeholder="選填">
+        </div>
+        <button onclick="sendVerification()" id="btn-send">發送驗證碼</button>
+    </div>
+
+    <!-- 步驟 2: 輸入驗證碼 -->
+    <div id="step2-form" class="hidden">
+        <div class="success">驗證碼已發送至您的信箱！</div>
+        <div class="form-group">
+            <label>驗證碼 (Code)*</label>
+            <input type="text" id="code" placeholder="請輸入4位數字驗證碼" maxlength="4">
+        </div>
+        <button onclick="verifyAndRegister()" id="btn-verify">完成註冊</button>
+    </div>
+
+    <div id="message-box" class="error"></div>
+</div>
+
+<script>
+    // API 基礎路徑
+    const API_BASE = "https://sse.sino-suisse.com/api/user";
+
+    // GAS Web App URL (用來標記已註冊)
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
+
+    let currentSn = ""; // 儲存 API 返回的 curr_sn
+
+    // 從 URL 參數讀取 ref (推薦人) 和 uid (LINE userId)
+    const urlParams = new URLSearchParams(window.location.search);
+    const refParam = urlParams.get('ref') || '';
+    const uidParam = urlParams.get('uid') || '';
+
+    // 自動帶入推薦人並設為 readonly
+    window.addEventListener('DOMContentLoaded', function() {
+        if (refParam) {
+            var refInput = document.getElementById('referrer');
+            refInput.value = refParam;
+            refInput.readOnly = true;
+        }
+    });
+
+    async function sendVerification() {
+        const btn = document.getElementById('btn-send');
+        const msgBox = document.getElementById('message-box');
+
+        // 收集表單數據
+        const data = {
+            email: document.getElementById('email').value,
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            repassword: document.getElementById('repassword').value,
+            referrer: document.getElementById('referrer').value,
+            full_name: document.getElementById('full_name').value,
+            phone: document.getElementById('phone').value
+        };
+
+        // 簡單驗證
+        if(!data.email || !data.username || !data.password || !data.referrer) {
+            msgBox.innerText = "請填寫所有必填欄位";
+            return;
+        }
+        if(data.password !== data.repassword) {
+            msgBox.innerText = "兩次密碼輸入不一致";
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "發送中...";
+        msgBox.innerText = "";
+
+        try {
+            const response = await fetch(`${API_BASE}/Register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.code === 200) {
+                // 成功，進入第二步
+                currentSn = result.data.curr_sn;
+                document.getElementById('step1-form').classList.add('hidden');
+                document.getElementById('step2-form').classList.remove('hidden');
+            } else {
+                msgBox.innerText = "錯誤: " + result.msg + " (" + result.code + ")";
+                btn.disabled = false;
+                btn.innerText = "發送驗證碼";
+            }
+        } catch (error) {
+            console.error(error);
+            msgBox.innerText = "連線失敗，請稍後再試或聯繫管理員。";
+            btn.disabled = false;
+            btn.innerText = "發送驗證碼";
+        }
+    }
+
+    async function verifyAndRegister() {
+        const btn = document.getElementById('btn-verify');
+        const msgBox = document.getElementById('message-box');
+        const code = document.getElementById('code').value;
+
+        if(!code) {
+            msgBox.innerText = "請輸入驗證碼";
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "驗證中...";
+
+        try {
+            const response = await fetch(`${API_BASE}/RegisterVerification`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    curr_sn: currentSn,
+                    code: code
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.code === 200) {
+                // 註冊成功 → 通知 GAS 標記已註冊
+                msgBox.className = 'success';
+                msgBox.innerText = "註冊成功！正在跳轉...";
+
+                if (uidParam) {
+                    // 呼叫 GAS doGet 標記用戶為已註冊
+                    var markUrl = GAS_URL + '?action=markAppRegistered&userId=' + encodeURIComponent(uidParam);
+                    try {
+                        await fetch(markUrl, { mode: 'no-cors' });
+                    } catch (e) {
+                        console.warn('標記已註冊呼叫失敗 (不影響跳轉):', e);
+                    }
+                }
+
+                // 跳轉至 APP 下載頁
+                setTimeout(function() {
+                    window.location.href = 'app-download.html';
+                }, 1000);
+            } else {
+                msgBox.innerText = "驗證失敗: " + result.msg;
+                btn.disabled = false;
+                btn.innerText = "完成註冊";
+            }
+        } catch (error) {
+            msgBox.innerText = "連線失敗";
+            btn.disabled = false;
+            btn.innerText = "完成註冊";
+        }
+    }
+</script>
+
+</body>
+</html>
