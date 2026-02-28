@@ -71,10 +71,7 @@
 </div>
 
 <script>
-    // API 基礎路徑
-    const API_BASE = "https://sse.sino-suisse.com/api/user";
-
-    // GAS Web App URL (用來標記已註冊)
+    // 所有 API 呼叫都透過 GAS proxy 中轉（解決 CORS）
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyzC2W0P3tclP8OptxAr0Mb2kMVAdvl4y_moqvZeagL0InLb8TfqQVWRifFjie3Az0GvA/exec';
 
     let currentSn = ""; // 儲存 API 返回的 curr_sn
@@ -123,10 +120,10 @@
         msgBox.innerText = "";
 
         try {
-            const response = await fetch(`${API_BASE}/Register`, {
+            const response = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(Object.assign({ proxyAction: 'register' }, data))
             });
 
             if (!response.ok) {
@@ -167,10 +164,11 @@
         btn.innerText = "驗證中...";
 
         try {
-            const response = await fetch(`${API_BASE}/RegisterVerification`, {
+            const response = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    proxyAction: 'verify',
                     curr_sn: currentSn,
                     code: code
                 })
