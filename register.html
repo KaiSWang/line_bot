@@ -14,7 +14,8 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
         input[readonly] { background-color: #e9ecef; color: #666; }
         .phone-row { display: flex; gap: 8px; }
-        .phone-row select { width: 100px; flex-shrink: 0; }
+        .phone-row select { flex: 4; min-width: 0; }
+        .phone-row input[type="tel"] { flex: 5; min-width: 0; }
         .phone-row input { flex: 1; }
         button { width: 100%; padding: 12px; background-color: #002855; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
         button:disabled { background-color: #99aec4; }
