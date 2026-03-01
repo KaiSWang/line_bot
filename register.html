@@ -122,7 +122,7 @@
         try {
             const response = await fetch(GAS_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                redirect: 'follow',
                 body: JSON.stringify(Object.assign({ proxyAction: 'register' }, data))
             });
 
@@ -166,7 +166,7 @@
         try {
             const response = await fetch(GAS_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                redirect: 'follow',
                 body: JSON.stringify({
                     proxyAction: 'verify',
                     curr_sn: currentSn,
