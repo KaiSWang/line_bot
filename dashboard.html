@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>華瑞管理後台</title>
+<style>
+:root {
+  --primary: #002855;
+  --primary-light: #003d7a;
+  --primary-dark: #001a3a;
+  --accent: #0066cc;
+  --bg: #f4f6f9;
+  --card: #fff;
+  --text: #333;
+  --text-light: #666;
+  --border: #dde1e6;
+  --danger: #d32f2f;
+  --success: #2e7d32;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; background: var(--bg); color: var(--text); }
+
+/* Login */
+.login-wrap { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.login-card { background: var(--card); border-radius: var(--radius); box-shadow: 0 4px 24px rgba(0,0,0,.1); padding: 40px; width: 100%; max-width: 380px; text-align: center; }
+.login-card img { height: 48px; margin-bottom: 16px; }
+.login-card h1 { font-size: 20px; color: var(--primary); margin-bottom: 24px; }
+.login-card input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 15px; margin-bottom: 16px; }
+.login-card input:focus { outline: none; border-color: var(--accent); }
+.login-card .err { color: var(--danger); font-size: 13px; margin-bottom: 12px; min-height: 18px; }
+
+/* Buttons */
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius); font-size: 14px; cursor: pointer; transition: opacity .2s; }
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-block { width: 100%; }
+
+/* Layout */
+.app { display: none; }
+.header { background: var(--primary); color: #fff; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header img { height: 32px; }
+.header h2 { font-size: 16px; font-weight: 500; }
+.header .logout { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px; }
+.header .logout:hover { background: rgba(255,255,255,.1); }
+
+/* Tabs */
+.tabs { display: flex; background: var(--primary-dark); padding: 0 24px; }
+.tab-btn { background: transparent; border: none; color: rgba(255,255,255,.6); padding: 12px 20px; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s; }
+.tab-btn:hover { color: rgba(255,255,255,.8); }
+.tab-btn.active { color: #fff; border-bottom-color: #fff; }
+
+/* Content */
+.content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Toolbar */
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.toolbar h3 { font-size: 18px; color: var(--primary); }
+
+/* Table */
+.table-wrap { background: var(--card); border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,.06); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { background: var(--bg); color: var(--text-light); font-weight: 600; text-align: left; padding: 12px 16px; white-space: nowrap; position: sticky; top: 0; }
+td { padding: 10px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f0f4f8; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.badge-green { background: #e8f5e9; color: var(--success); }
+.badge-gray { background: #eee; color: #888; }
+.actions { display: flex; gap: 6px; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; justify-content: center; align-items: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--card); border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,.2); width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.modal-header .close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-light); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; }
+.form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+.form-group input[readonly] { background: #f5f5f5; color: #999; }
+
+/* Loading */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.7); display: flex; justify-content: center; align-items: center; z-index: 10; border-radius: var(--radius); }
+.loading-overlay .dot-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; }
+.table-container { position: relative; min-height: 80px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: var(--radius); color: #fff; font-size: 14px; z-index: 200; opacity: 0; transform: translateY(20px); transition: all .3s; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { background: var(--success); }
+.toast-error { background: var(--danger); }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .header { padding: 0 12px; }
+  .tabs { padding: 0 8px; overflow-x: auto; }
+  .tab-btn { padding: 10px 14px; font-size: 13px; }
+  .content { padding: 16px; }
+  .toolbar { flex-direction: column; align-items: flex-start; }
+  td, th { padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Login ===== -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-card">
+    <img src="logo.png" alt="Logo">
+    <h1>管理後台登入</h1>
+    <input id="loginKey" type="password" placeholder="請輸入管理密碼" autocomplete="off">
+    <div id="loginErr" class="err"></div>
+    <button id="loginBtn" class="btn btn-primary btn-block" onclick="doLogin()">登入</button>
+  </div>
+</div>
+
+<!-- ===== App ===== -->
+<div id="app" class="app">
+  <div class="header">
+    <div class="header-left">
+      <img src="logo.png" alt="Logo">
+      <h2>管理後台</h2>
+    </div>
+    <button class="logout" onclick="doLogout()">登出</button>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="staff" onclick="switchTab('staff')">員工管理</button>
+    <button class="tab-btn" data-tab="customer" onclick="switchTab('customer')">客戶管理</button>
+    <button class="tab-btn" data-tab="source" onclick="switchTab('source')">來源管理</button>
+  </div>
+  <div class="content">
+
+    <!-- Tab 1: 員工管理 -->
+    <div id="tab-staff" class="tab-panel active">
+      <div class="toolbar">
+        <h3>員工管理</h3>
+        <button class="btn btn-accent btn-sm" onclick="openStaffCreate()">+ 新增員工</button>
+      </div>
+      <div class="table-container">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>編號</th><th>姓名</th><th>LINE 綁定</th><th>權限角色</th><th>Status</th><th>操作</th></tr></thead>
+            <tbody id="staffBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: 客戶管理 -->
+    <div id="tab-customer" class="tab-panel">
+      <div class="toolbar">
+        <h3>客戶管理</h3>
+      </div>
+      <div class="table-container">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>暱稱</th><th>負責專員</th><th>狀態</th><th>來源</th><th>APP已註冊</th><th>更新時間</th><th>操作</th></tr></thead>
+            <tbody id="customerBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: 來源管理 -->
+    <div id="tab-source" class="tab-panel">
+      <div class="toolbar">
+        <h3>來源管理</h3>
+        <button class="btn btn-accent btn-sm" onclick="openSourceCreate()">+ 新增來源</button>
+      </div>
+      <div class="table-container">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>參數代碼</th><th>來源名稱</th><th>指定負責專員</th><th>操作</th></tr></thead>
+            <tbody id="sourceBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== Modal ===== -->
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modalTitle"></span>
+      <button class="close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ==========================================
+// Config
+// ==========================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwBdBBOZKMbxDG-mUb1LcCWgJRy2x0RM01yHJEiN7gPmF6JBd_cPZPXJq3r2i1gYNxsw/exec';
+
+// Column name constants (match Config.js)
+const COL = {
+  STAFF: { ID: '編號', NAME: '姓名', LINE_USER_ID: 'LineUserId', TALKING_TO: 'TalkingTo', STATUS: 'Status', ROLE: '權限角色' },
+  TARGET: { UID: '客戶ID', BIND_AGENT: '負責專員', DISPLAY_NAME: '暱稱', STATUS: '狀態', LAST_MSG: '最後訊息', UPDATE_TIME: '更新時間', SOURCE: '來源', APP_REGISTERED: 'APP已註冊' },
+  SOURCE: { CODE: '參數代碼 (Ref)', SOURCE_NAME: '來源名稱', ASSIGN_TO: '指定負責專員' }
+};
+
+const STATUS_MAP = { NEW: '新進人員', CONTACTED: '已聯繫', INTERVIEW: '面試中', HIRED: '已錄取/成交', CLOSED: '已結案' };
+const STATUS_VALUES = Object.values(STATUS_MAP);
+
+// Cache
+let staffList = [];
+let customerList = [];
+let sourceList = [];
+
+// ==========================================
+// API Helper
+// ==========================================
+async function api(payload) {
+  payload.key = sessionStorage.getItem('dk');
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const text = await resp.text();
+    try { return JSON.parse(text); } catch { return { success: false, error: '回應格式異常: ' + text.substring(0, 100) }; }
+  } catch (err) {
+    var msg = '網路連線失敗';
+    if (location.protocol === 'file:') {
+      msg = '無法從本機檔案呼叫 API，請部署到 GitHub Pages 或用本地 Server 開啟';
+    }
+    return { success: false, error: msg };
+  }
+}
+
+// ==========================================
+// Login / Logout
+// ==========================================
+document.getElementById('loginKey').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  const key = document.getElementById('loginKey').value.trim();
+  if (!key) return;
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginErr').textContent = '';
+
+  const res = await api({ dashboardAction: 'list', table: 'STAFF', key: key });
+  document.getElementById('loginBtn').disabled = false;
+
+  if (res.success) {
+    sessionStorage.setItem('dk', key);
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    staffList = res.data || [];
+    renderStaff();
+    loadCustomers();
+    loadSources();
+  } else {
+    document.getElementById('loginErr').textContent = res.error || '密碼錯誤或連線失敗';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('dk');
+  location.reload();
+}
+
+// Check session on load
+if (sessionStorage.getItem('dk')) {
+  doLogin.__auto = true;
+  document.getElementById('loginKey').value = sessionStorage.getItem('dk');
+  doLogin();
+}
+
+// ==========================================
+// Tab Switching
+// ==========================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+}
+
+// ==========================================
+// Data Loading
+// ==========================================
+async function loadStaff() {
+  const res = await api({ dashboardAction: 'list', table: 'STAFF' });
+  if (res.success) { staffList = res.data || []; renderStaff(); }
+  else toast('載入員工失敗', 'error');
+}
+
+async function loadCustomers() {
+  const res = await api({ dashboardAction: 'list', table: 'TARGET' });
+  if (res.success) { customerList = res.data || []; renderCustomers(); }
+  else toast('載入客戶失敗', 'error');
+}
+
+async function loadSources() {
+  const res = await api({ dashboardAction: 'list', table: 'SOURCE_CONFIG' });
+  if (res.success) { sourceList = res.data || []; renderSources(); }
+  else toast('載入來源失敗', 'error');
+}
+
+// ==========================================
+// Render: Staff
+// ==========================================
+function renderStaff() {
+  const tbody = document.getElementById('staffBody');
+  if (!staffList.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:24px">暫無資料</td></tr>'; return; }
+  tbody.innerHTML = staffList.map(r => {
+    const bound = r[COL.STAFF.LINE_USER_ID] ? '<span class="badge badge-green">已綁定</span>' : '<span class="badge badge-gray">未綁定</span>';
+    return `<tr>
+      <td>${esc(r[COL.STAFF.ID])}</td>
+      <td>${esc(r[COL.STAFF.NAME])}</td>
+      <td>${bound}</td>
+      <td>${esc(r[COL.STAFF.ROLE])}</td>
+      <td>${esc(r[COL.STAFF.STATUS])}</td>
+      <td class="actions">
+        <button class="btn btn-outline btn-sm" onclick="openStaffEdit(${staffList.indexOf(r)})">編輯</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('STAFF','${COL.STAFF.ID}','${esc(r[COL.STAFF.ID])}')">刪除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ==========================================
+// Render: Customer
+// ==========================================
+function staffLabel(id) {
+  const s = staffList.find(r => String(r[COL.STAFF.ID]) === String(id));
+  return s ? id + ' ' + s[COL.STAFF.NAME] : id || '-';
+}
+
+function renderCustomers() {
+  const tbody = document.getElementById('customerBody');
+  if (!customerList.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:24px">暫無資料</td></tr>'; return; }
+  tbody.innerHTML = customerList.map((r, i) => `<tr>
+    <td>${esc(r[COL.TARGET.DISPLAY_NAME])}</td>
+    <td>${esc(staffLabel(r[COL.TARGET.BIND_AGENT]))}</td>
+    <td>${esc(r[COL.TARGET.STATUS])}</td>
+    <td>${esc(r[COL.TARGET.SOURCE])}</td>
+    <td>${esc(r[COL.TARGET.APP_REGISTERED])}</td>
+    <td>${esc(r[COL.TARGET.UPDATE_TIME])}</td>
+    <td class="actions">
+      <button class="btn btn-outline btn-sm" onclick="openCustomerEdit(${i})">編輯</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete('TARGET','${COL.TARGET.UID}','${esc(r[COL.TARGET.UID])}')">刪除</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ==========================================
+// Render: Source
+// ==========================================
+function renderSources() {
+  const tbody = document.getElementById('sourceBody');
+  if (!sourceList.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px">暫無資料</td></tr>'; return; }
+  tbody.innerHTML = sourceList.map((r, i) => `<tr>
+    <td>${esc(r[COL.SOURCE.CODE])}</td>
+    <td>${esc(r[COL.SOURCE.SOURCE_NAME])}</td>
+    <td>${esc(staffLabel(r[COL.SOURCE.ASSIGN_TO]))}</td>
+    <td class="actions">
+      <button class="btn btn-outline btn-sm" onclick="openSourceEdit(${i})">編輯</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete('SOURCE_CONFIG','${COL.SOURCE.CODE}','${esc(r[COL.SOURCE.CODE])}')">刪除</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ==========================================
+// Staff dropdown helper
+// ==========================================
+function staffOptions(selected) {
+  return '<option value="">-- 請選擇 --</option>' +
+    staffList.map(r => {
+      const id = r[COL.STAFF.ID];
+      const sel = String(id) === String(selected) ? ' selected' : '';
+      return `<option value="${esc(id)}"${sel}>${esc(id)} ${esc(r[COL.STAFF.NAME])}</option>`;
+    }).join('');
+}
+
+function statusOptions(selected) {
+  return STATUS_VALUES.map(s => `<option${s===selected?' selected':''}>${esc(s)}</option>`).join('');
+}
+
+// ==========================================
+// Modal Helpers
+// ==========================================
+function openModal(title, bodyHTML, footerHTML) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHTML;
+  document.getElementById('modalFooter').innerHTML = footerHTML;
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+// ==========================================
+// Staff CRUD
+// ==========================================
+function openStaffCreate() {
+  openModal('新增員工',
+    `<div class="form-group"><label>姓名</label><input id="f_name"></div>
+     <div class="form-group"><label>權限角色</label><input id="f_role" placeholder="例：Admin, RM"></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">取消</button>
+     <button class="btn btn-primary" id="modalSaveBtn" onclick="saveStaffCreate()">新增</button>`
+  );
+}
+
+async function saveStaffCreate() {
+  const name = document.getElementById('f_name').value.trim();
+  const role = document.getElementById('f_role').value.trim();
+  if (!name) { toast('請填寫姓名', 'error'); return; }
+  setBtnLoading('modalSaveBtn', true);
+  const res = await api({ dashboardAction: 'create', table: 'STAFF', data: { NAME: name, ROLE: role } });
+  setBtnLoading('modalSaveBtn', false);
+  if (res.success) { toast('新增成功'); closeModal(); loadStaff(); }
+  else toast(res.error || '新增失敗', 'error');
+}
+
+function openStaffEdit(idx) {
+  const r = staffList[idx];
+  openModal('編輯員工',
+    `<div class="form-group"><label>編號</label><input value="${esc(r[COL.STAFF.ID])}" readonly></div>
+     <div class="form-group"><label>姓名</label><input id="f_name" value="${esc(r[COL.STAFF.NAME])}"></div>
+     <div class="form-group"><label>權限角色</label><input id="f_role" value="${esc(r[COL.STAFF.ROLE])}"></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">取消</button>
+     <button class="btn btn-primary" id="modalSaveBtn" onclick="saveStaffEdit('${esc(r[COL.STAFF.ID])}')">儲存</button>`
+  );
+}
+
+async function saveStaffEdit(id) {
+  const name = document.getElementById('f_name').value.trim();
+  const role = document.getElementById('f_role').value.trim();
+  setBtnLoading('modalSaveBtn', true);
+  const res = await api({ dashboardAction: 'update', table: 'STAFF', searchKey: COL.STAFF.ID, searchValue: id, data: { [COL.STAFF.NAME]: name, [COL.STAFF.ROLE]: role } });
+  setBtnLoading('modalSaveBtn', false);
+  if (res.success) { toast('更新成功'); closeModal(); loadStaff(); }
+  else toast(res.error || '更新失敗', 'error');
+}
+
+// ==========================================
+// Customer CRUD
+// ==========================================
+function openCustomerEdit(idx) {
+  const r = customerList[idx];
+  openModal('編輯客戶',
+    `<div class="form-group"><label>暱稱（唯讀）</label><input value="${esc(r[COL.TARGET.DISPLAY_NAME])}" readonly></div>
+     <div class="form-group"><label>負責專員</label><select id="f_agent">${staffOptions(r[COL.TARGET.BIND_AGENT])}</select></div>
+     <div class="form-group"><label>狀態</label><select id="f_status">${statusOptions(r[COL.TARGET.STATUS])}</select></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">取消</button>
+     <button class="btn btn-primary" id="modalSaveBtn" onclick="saveCustomerEdit('${esc(r[COL.TARGET.UID])}')">儲存</button>`
+  );
+}
+
+async function saveCustomerEdit(uid) {
+  const agent = document.getElementById('f_agent').value;
+  const status = document.getElementById('f_status').value;
+  setBtnLoading('modalSaveBtn', true);
+  const res = await api({ dashboardAction: 'update', table: 'TARGET', searchKey: COL.TARGET.UID, searchValue: uid, data: { [COL.TARGET.BIND_AGENT]: agent, [COL.TARGET.STATUS]: status } });
+  setBtnLoading('modalSaveBtn', false);
+  if (res.success) { toast('更新成功'); closeModal(); loadCustomers(); }
+  else toast(res.error || '更新失敗', 'error');
+}
+
+// ==========================================
+// Source CRUD
+// ==========================================
+function openSourceCreate() {
+  openModal('新增來源',
+    `<div class="form-group"><label>參數代碼 (Ref)</label><input id="f_code" placeholder="例：fb_ad_01"></div>
+     <div class="form-group"><label>來源名稱</label><input id="f_sname" placeholder="例：Facebook 廣告"></div>
+     <div class="form-group"><label>指定負責專員</label><select id="f_agent">${staffOptions('')}</select></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">取消</button>
+     <button class="btn btn-primary" id="modalSaveBtn" onclick="saveSourceCreate()">新增</button>`
+  );
+}
+
+async function saveSourceCreate() {
+  const code = document.getElementById('f_code').value.trim();
+  const sname = document.getElementById('f_sname').value.trim();
+  const agent = document.getElementById('f_agent').value;
+  if (!code || !sname) { toast('請填寫完整', 'error'); return; }
+  setBtnLoading('modalSaveBtn', true);
+  const res = await api({ dashboardAction: 'create', table: 'SOURCE_CONFIG', data: { CODE: code, SOURCE_NAME: sname, ASSIGN_TO: agent } });
+  setBtnLoading('modalSaveBtn', false);
+  if (res.success) { toast('新增成功'); closeModal(); loadSources(); }
+  else toast(res.error || '新增失敗', 'error');
+}
+
+function openSourceEdit(idx) {
+  const r = sourceList[idx];
+  openModal('編輯來源',
+    `<div class="form-group"><label>參數代碼（唯讀）</label><input value="${esc(r[COL.SOURCE.CODE])}" readonly></div>
+     <div class="form-group"><label>來源名稱</label><input id="f_sname" value="${esc(r[COL.SOURCE.SOURCE_NAME])}"></div>
+     <div class="form-group"><label>指定負責專員</label><select id="f_agent">${staffOptions(r[COL.SOURCE.ASSIGN_TO])}</select></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">取消</button>
+     <button class="btn btn-primary" id="modalSaveBtn" onclick="saveSourceEdit('${esc(r[COL.SOURCE.CODE])}')">儲存</button>`
+  );
+}
+
+async function saveSourceEdit(code) {
+  const sname = document.getElementById('f_sname').value.trim();
+  const agent = document.getElementById('f_agent').value;
+  setBtnLoading('modalSaveBtn', true);
+  const res = await api({ dashboardAction: 'update', table: 'SOURCE_CONFIG', searchKey: COL.SOURCE.CODE, searchValue: code, data: { [COL.SOURCE.SOURCE_NAME]: sname, [COL.SOURCE.ASSIGN_TO]: agent } });
+  setBtnLoading('modalSaveBtn', false);
+  if (res.success) { toast('更新成功'); closeModal(); loadSources(); }
+  else toast(res.error || '更新失敗', 'error');
+}
+
+// ==========================================
+// Delete (shared)
+// ==========================================
+function confirmDelete(table, searchKey, searchValue) {
+  openModal('確認刪除',
+    `<p style="margin:8px 0">確定要刪除這筆資料嗎？此操作無法還原。</p>
+     <p style="color:#999;font-size:13px">${searchKey}: ${searchValue}</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">取消</button>
+     <button class="btn btn-danger" id="modalSaveBtn" onclick="doDelete('${table}','${esc(searchKey)}','${esc(searchValue)}')">刪除</button>`
+  );
+}
+
+async function doDelete(table, searchKey, searchValue) {
+  setBtnLoading('modalSaveBtn', true);
+  const res = await api({ dashboardAction: 'delete', table: table, searchKey: searchKey, searchValue: searchValue });
+  setBtnLoading('modalSaveBtn', false);
+  if (res.success) {
+    toast('已刪除');
+    closeModal();
+    if (table === 'STAFF') loadStaff();
+    else if (table === 'TARGET') loadCustomers();
+    else loadSources();
+  } else toast(res.error || '刪除失敗', 'error');
+}
+
+// ==========================================
+// Utilities
+// ==========================================
+function esc(val) {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type === 'error' ? 'toast-error' : 'toast-success');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function setBtnLoading(id, loading) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (loading) { btn._orig = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>處理中...'; btn.disabled = true; }
+  else { btn.innerHTML = btn._orig || '儲存'; btn.disabled = false; }
+}
+</script>
+</body>
+</html>
