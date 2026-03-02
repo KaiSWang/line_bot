@@ -237,7 +237,7 @@ let sourceList = [];
 // API Helper
 // ==========================================
 async function api(payload) {
-  payload.key = sessionStorage.getItem('dk');
+  if (!payload.key) payload.key = sessionStorage.getItem('dk');
   try {
     const url = GAS_URL + '?dashboard=' + encodeURIComponent(JSON.stringify(payload));
     const resp = await fetch(url, { redirect: 'follow' });
