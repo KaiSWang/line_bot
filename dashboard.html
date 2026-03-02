@@ -239,14 +239,10 @@ let sourceList = [];
 async function api(payload) {
   payload.key = sessionStorage.getItem('dk');
   try {
-    const resp = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload),
-      redirect: 'follow'
-    });
+    const url = GAS_URL + '?dashboard=' + encodeURIComponent(JSON.stringify(payload));
+    const resp = await fetch(url, { redirect: 'follow' });
     const text = await resp.text();
-    try { return JSON.parse(text); } catch { return { success: false, error: '回應格式異常: ' + text.substring(0, 100) }; }
+    try { return JSON.parse(text); } catch { return { success: false, error: '回應格式異常: ' + text.substring(0, 200) }; }
   } catch (err) {
     var msg = '網路連線失敗';
     if (location.protocol === 'file:') {
